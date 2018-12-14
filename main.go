@@ -32,35 +32,40 @@ func Connect(endpoint string, token string) (*jsonrpc.Tunnel, error) {
 func main() {
 	log.SetOutput(os.Stdout)
 	var cheUrl string
-	flag.StringVar(&cheUrl, "cheurl", "ws://che-eclipse-che.192.168.99.100.nip.io/api/websocket", "Che endpoint url")
+	flag.StringVar(&cheUrl, "cheurl", "ws://che-eclipse-che.192.168.64.12.nip.io/api/websocket", "Che endpoint url")
 	var cheToken string
 	flag.StringVar(&cheToken, "token", "", "Che token")
 
-	numOfThreads := flag.Int("thum", 1, "number of threads sending messages")
+	numOfThreads := flag.Int("tnum", 100, "number of threads sending messages")
+	numOfMessages := flag.Int("mnum", 10, "number of messages to send")
+	flag.PrintDefaults()
 	flag.Parse()
-	fmt.Println("thum:", *numOfThreads)
-	fmt.Println("cheurl:", cheUrl)
-	fmt.Println("cheToken:", cheToken)
 	wg := &sync.WaitGroup{}
 	wg.Add(*numOfThreads)
 
 	for i := 0; i < *numOfThreads; i++ {
-		go func(endpoint string, token string) {
+		go func(endpoint string, token string, th int) {
 			tunnel:= ConnectOrFail(endpoint, token)
+			defer tunnel.Close()
 
 			tunnel.Conn()
-			event := &model.PluginBrokerLogEvent{
-				RuntimeID: model.RuntimeID{Workspace:"ws1", Environment:"e1", OwnerId:"own1"},
-				Text:      "log text",
-				Time:      time.Now(),
+
+			for j := 0; j < *numOfMessages; j++ {
+				message := fmt.Sprintf("Messaget from thread %d number %d", th, j)
+				event := &model.PluginBrokerLogEvent{
+					RuntimeID: model.RuntimeID{Workspace:"ws1", Environment:"e1", OwnerId:"own1"},
+					Text:      message ,
+					Time:      time.Now(),
+				}
+				log.Print(message)
+				if err := tunnel.Notify(event.Type(), event); err != nil {
+					log.Fatalf("Trying to send event of type '%s' to closed tunnel '%s'", event.Type(), tunnel.ID())
+				}
 			}
-			if err := tunnel.Notify(event.Type(), event); err != nil {
-				log.Fatalf("Trying to send event of type '%s' to closed tunnel '%s'", event.Type(), tunnel.ID())
-			}
-			defer tunnel.Close()
+
 			wg.Done()
 
-		}(cheUrl,cheToken)
+		}(cheUrl,cheToken, i)
 	}
 	wg.Wait()
 }
