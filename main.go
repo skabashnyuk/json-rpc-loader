@@ -6,13 +6,12 @@ import (
 	"github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-go-jsonrpc/jsonrpcws"
 	"github.com/eclipse/che-plugin-broker/model"
+	"github.com/gorilla/websocket"
 	"log"
 	"os"
 	"sync"
 	"time"
 )
-
-
 
 func ConnectOrFail(endpoint string, token string) *jsonrpc.Tunnel {
 	tunnel, err := Connect(endpoint, token)
@@ -38,20 +37,23 @@ func main() {
 
 	numOfThreads := flag.Int("tnum", 100, "number of threads sending messages")
 	numOfMessages := flag.Int("mnum", 10000, "number of messages to send")
+	wsTimeout := flag.Int("wstimeout", 10, "websocket connection timeout seconds")
 	flag.Parse()
 
 	fmt.Println("thum:", *numOfThreads)
 	fmt.Println("mnum:", *numOfMessages)
 	fmt.Println("cheurl:", cheUrl)
 	fmt.Println("cheToken:", cheToken)
+	fmt.Println("wstimeout:", *wsTimeout)
 
+	websocket.DefaultDialer.HandshakeTimeout = time.Duration(*wsTimeout) * time.Second
 
 	wg := &sync.WaitGroup{}
 	wg.Add(*numOfThreads)
 
 	for i := 0; i < *numOfThreads; i++ {
 		go func(endpoint string, token string, th int) {
-			tunnel:= ConnectOrFail(endpoint, token)
+			tunnel := ConnectOrFail(endpoint, token)
 			defer tunnel.Close()
 
 			tunnel.Conn()
@@ -59,8 +61,8 @@ func main() {
 			for j := 0; j < *numOfMessages; j++ {
 				message := fmt.Sprintf("Messaget from thread %d number %d", th, j)
 				event := &model.PluginBrokerLogEvent{
-					RuntimeID: model.RuntimeID{Workspace:"ws1", Environment:"e1", OwnerId:"own1"},
-					Text:      message ,
+					RuntimeID: model.RuntimeID{Workspace: "ws1", Environment: "e1", OwnerId: "own1"},
+					Text:      message,
 					Time:      time.Now(),
 				}
 				log.Print(message)
@@ -71,7 +73,7 @@ func main() {
 
 			wg.Done()
 
-		}(cheUrl,cheToken, i)
+		}(cheUrl, cheToken, i)
 	}
 	wg.Wait()
 }
