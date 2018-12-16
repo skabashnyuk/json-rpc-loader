@@ -37,9 +37,15 @@ func main() {
 	flag.StringVar(&cheToken, "token", "", "Che token")
 
 	numOfThreads := flag.Int("tnum", 100, "number of threads sending messages")
-	numOfMessages := flag.Int("mnum", 10, "number of messages to send")
-	flag.PrintDefaults()
+	numOfMessages := flag.Int("mnum", 10000, "number of messages to send")
 	flag.Parse()
+
+	fmt.Println("thum:", *numOfThreads)
+	fmt.Println("mnum:", *numOfMessages)
+	fmt.Println("cheurl:", cheUrl)
+	fmt.Println("cheToken:", cheToken)
+
+
 	wg := &sync.WaitGroup{}
 	wg.Add(*numOfThreads)
 
