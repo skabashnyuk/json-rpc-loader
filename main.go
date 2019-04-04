@@ -7,6 +7,7 @@ import (
 	"github.com/eclipse/che-plugin-broker/model"
 	"github.com/gorilla/websocket"
 	"github.com/kelseyhightower/envconfig"
+	"github.com/paulbellamy/ratecounter"
 	"log"
 	"os"
 	"os/signal"
@@ -15,7 +16,9 @@ import (
 	"time"
 )
 
-var Suspending bool = false
+var Suspending  = false
+var MajorCounter = ratecounter.NewRateCounter(1 * time.Second)
+var MinorCounter = ratecounter.NewRateCounter(1 * time.Second)
 
 type Configuration struct {
 	CheHost      string        `required:"true" split_words:"true"`
@@ -41,7 +44,13 @@ func Connect(endpoint string, token string) (*jsonrpc.Tunnel, error) {
 	return jsonrpc.NewManagedTunnel(conn), nil
 }
 
-func SendMessagesInLoop(wsUrl, token, senderId string) {
+func PrintRate(){
+	for !Suspending {
+		fmt.Printf("\rMajor rate %d/s  Minor rate %d/s", MajorCounter.Rate(), MinorCounter.Rate())
+	}
+}
+
+func SendMessagesInLoop(wsUrl, token, senderId string, ratecounter *ratecounter.RateCounter) {
 
 	tunnel := ConnectOrFail(wsUrl, token)
 	defer tunnel.Close()
@@ -59,6 +68,7 @@ func SendMessagesInLoop(wsUrl, token, senderId string) {
 		if err := tunnel.Notify(event.Type(), event); err != nil {
 			log.Fatalf("Trying to send event of type '%s' to closed tunnel '%s'", event.Type(), tunnel.ID())
 		}
+		ratecounter.Incr(1)
 	}
 	fmt.Printf("Sending complete %s\n", senderId)
 }
@@ -94,12 +104,13 @@ func main() {
 	minor.WriteString("/api/websocket-minor")
 
 	for i := 0; i < configuration.MajorThreads; i++ {
-		go SendMessagesInLoop(major.String(), configuration.CheToken, "major"+ strconv.Itoa(i))
+		go SendMessagesInLoop(major.String(), configuration.CheToken, "major"+ strconv.Itoa(i), MajorCounter)
 	}
 
 	for i := 0; i < configuration.MajorThreads; i++ {
-		go SendMessagesInLoop(minor.String(), configuration.CheToken, "minor"+ strconv.Itoa(i))
+		go SendMessagesInLoop(minor.String(), configuration.CheToken, "minor"+ strconv.Itoa(i), MinorCounter)
 	}
+	go PrintRate()
 	// After setting everything up!
 	// Wait for a SIGINT (perhaps triggered by user with CTRL-C)
 	// Run cleanup when signal is received

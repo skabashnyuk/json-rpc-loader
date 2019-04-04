@@ -36,6 +36,14 @@
   revision = "f611eb38b3875cc3bd991ca91c51d06446afa14c"
   version = "v1.3.0"
 
+[[projects]]
+  digest = "1:7233f2b1f864831a729ca0d48e84081ac8b4ce040a5aad3b394c421a7a0405cb"
+  name = "github.com/paulbellamy/ratecounter"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "524851a93235ac051e3540563ed7909357fe24ab"
+  version = "v0.2.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
@@ -45,6 +53,7 @@
     "github.com/eclipse/che-plugin-broker/model",
     "github.com/gorilla/websocket",
     "github.com/kelseyhightower/envconfig",
+    "github.com/paulbellamy/ratecounter",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
