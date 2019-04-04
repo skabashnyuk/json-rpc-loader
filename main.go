@@ -109,7 +109,7 @@ func main() {
 		go SendMessagesInLoop(major.String(), configuration.CheToken, "major"+ strconv.Itoa(i), MajorCounter)
 	}
 
-	for i := 0; i < configuration.MajorThreads; i++ {
+	for i := 0; i < configuration.MinorThreads; i++ {
 		go SendMessagesInLoop(minor.String(), configuration.CheToken, "minor"+ strconv.Itoa(i), MinorCounter)
 	}
 	go PrintRate()
