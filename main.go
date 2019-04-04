@@ -9,6 +9,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 	"github.com/paulbellamy/ratecounter"
 	"log"
+	"math/rand"
 	"os"
 	"os/signal"
 	"strconv"
@@ -59,7 +60,7 @@ func SendMessagesInLoop(wsUrl, token, senderId string, ratecounter *ratecounter.
 	tunnel.Conn()
 
 	for !Suspending {
-		message := fmt.Sprintf("Message sent from %s", senderId)
+		message := fmt.Sprintf("Message %s sent  from %s",RandStringRunes(rand.Intn(100)), senderId)
 		event := &model.PluginBrokerLogEvent{
 			RuntimeID: model.RuntimeID{Workspace: "ws1", Environment: "e1", OwnerId: "own1"},
 			Text:      message,
@@ -75,9 +76,23 @@ func SendMessagesInLoop(wsUrl, token, senderId string, ratecounter *ratecounter.
 	fmt.Printf("Sending complete %s\n", senderId)
 }
 
-func main() {
+func Init() {
 	log.SetOutput(os.Stdout)
+	rand.Seed(time.Now().UnixNano())
+}
 
+var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+func RandStringRunes(n int) string {
+	b := make([]rune, n)
+	for i := range b {
+		b[i] = letterRunes[rand.Intn(len(letterRunes))]
+	}
+	return string(b)
+}
+
+func main() {
+	Init()
 	var configuration Configuration
 	err := envconfig.Process("JsonRpcLoader", &configuration)
 	if err != nil {
