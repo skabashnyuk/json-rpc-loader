@@ -2,11 +2,10 @@
 
 
 [[projects]]
-  digest = "1:302bd3d3d720780d2ab1596b48891e01c7be7e93b2e247634fc3bd00b6540537"
+  digest = "1:e5c095ba351261598a2f621de0642b9cea19103cb1b979283f1943b3f4222942"
   name = "github.com/eclipse/che-go-jsonrpc"
   packages = [
     ".",
-    "event",
     "jsonrpcws",
   ]
   pruneopts = "UT"
@@ -14,14 +13,9 @@
   version = "0.2.0"
 
 [[projects]]
-  digest = "1:959cd766401377bd2ea259e0ea2f2778e069c6a3315151289d10b4cfa45597ac"
+  digest = "1:90b1a0b934aa436980e0e82305b3a37b7908328cdafc91ac734d3fd66897e7b0"
   name = "github.com/eclipse/che-plugin-broker"
-  packages = [
-    "broker",
-    "cfg",
-    "model",
-    "storage",
-  ]
+  packages = ["model"]
   pruneopts = "UT"
   revision = "e65ac22ba802e2366ce109d369fc072bbcb6d735"
   version = "v0.4.0"
@@ -35,12 +29,12 @@
   version = "v1.4.0"
 
 [[projects]]
-  digest = "1:342378ac4dcb378a5448dd723f0784ae519383532f5e70ade24132c4c8693202"
-  name = "gopkg.in/yaml.v2"
+  digest = "1:edbef42561faa44c19129b68d1e109fbc1647f63239250391eadc8d0e7c9f669"
+  name = "github.com/kelseyhightower/envconfig"
   packages = ["."]
   pruneopts = "UT"
-  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
-  version = "v2.2.1"
+  revision = "f611eb38b3875cc3bd991ca91c51d06446afa14c"
+  version = "v1.3.0"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -48,7 +42,9 @@
   input-imports = [
     "github.com/eclipse/che-go-jsonrpc",
     "github.com/eclipse/che-go-jsonrpc/jsonrpcws",
-    "github.com/eclipse/che-plugin-broker/broker",
+    "github.com/eclipse/che-plugin-broker/model",
+    "github.com/gorilla/websocket",
+    "github.com/kelseyhightower/envconfig",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
