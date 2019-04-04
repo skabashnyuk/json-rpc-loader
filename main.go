@@ -32,7 +32,7 @@ type Configuration struct {
 func ConnectOrFail(endpoint string, token string) *jsonrpc.Tunnel {
 	tunnel, err := Connect(endpoint, token)
 	if err != nil {
-		log.Fatalf("Couldn't connect to endpoint '%s', due to error '%s'", endpoint, err)
+		log.Printf("Couldn't connect to endpoint '%s', due to error '%s'", endpoint, err)
 	}
 	return tunnel
 }
@@ -46,7 +46,7 @@ func Connect(endpoint string, token string) (*jsonrpc.Tunnel, error) {
 
 func PrintRate(){
 	for !Suspending {
-		fmt.Printf("\rMajor rate %d/s  Minor rate %d/s", MajorCounter.Rate(), MinorCounter.Rate())
+		fmt.Printf("Major rate %d/s  Minor rate %d/s", MajorCounter.Rate(), MinorCounter.Rate())
 		time.Sleep(5 * time.Second)
 	}
 }
@@ -67,7 +67,8 @@ func SendMessagesInLoop(wsUrl, token, senderId string, ratecounter *ratecounter.
 		}
 		//log.Print(message)
 		if err := tunnel.Notify(event.Type(), event); err != nil {
-			log.Fatalf("Trying to send event of type '%s' to closed tunnel '%s'", event.Type(), tunnel.ID())
+			log.Printf("Trying to send event of type '%s' to closed tunnel '%s'", event.Type(), tunnel.ID())
+			return
 		}
 		ratecounter.Incr(1)
 	}
