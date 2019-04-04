@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: DeploymentConfig
+metadata:
+  name: jsorpc-loader-deployment
+spec:
+  replicas: 1
+  selector:
+    name: jsorpc-loader-deployment
+  strategy:
+    type: Rolling
+    rollingParams:
+  template:
+    metadata:
+      labels:
+        name: jsorpc-loader-deployment
+    spec:
+      containers:
+        - image: "ksmster/json-rpc-loader"
+          imagePullPolicy: Always
+          name: json-rpc-loader
+
+  triggers:
+    - type: ConfigChange

@@ -47,6 +47,7 @@ func Connect(endpoint string, token string) (*jsonrpc.Tunnel, error) {
 func PrintRate(){
 	for !Suspending {
 		fmt.Printf("\rMajor rate %d/s  Minor rate %d/s", MajorCounter.Rate(), MinorCounter.Rate())
+		time.Sleep(5 * time.Second)
 	}
 }
 
