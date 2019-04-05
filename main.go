@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/cenkalti/backoff"
 	"github.com/eclipse/che-go-jsonrpc"
 	"github.com/eclipse/che-go-jsonrpc/jsonrpcws"
 	"github.com/eclipse/che-plugin-broker/model"
@@ -14,29 +15,43 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
-var Suspending  = false
+var Suspending = false
 var MajorCounter = ratecounter.NewRateCounter(1 * time.Second)
 var MinorCounter = ratecounter.NewRateCounter(1 * time.Second)
+var WG = &sync.WaitGroup{}
 
 type Configuration struct {
-	CheHost      string        `required:"true" split_words:"true"`
-	CheToken     string        `split_words:"true"`
-	MajorThreads int           `default:"10" split_words:"true"`
-	MinorThreads int           `default:"10" split_words:"true"`
-	WsTimeout    time.Duration `default:"10s" split_words:"true"`
-	Secure       bool          `default:"false" split_words:"true"`
+	CheHost      string        `required:"true" split_words:"true" desc:"Che Server host"`
+	CheToken     string        `split_words:"true" desc:"User token for multi-user che"`
+	MajorThreads int           `default:"10" split_words:"true" desc:"Number of clients used to send message to major websocket endpoint"`
+	MinorThreads int           `default:"10" split_words:"true" desc:"Number of clients used to send message to minor websocket endpoint"`
+	WsTimeout    time.Duration `default:"10s" split_words:"true" desc:"Websocket connection timeout "`
+	Secure       bool          `default:"false" split_words:"true" desc:"Whatever secure websocket aka wss connection should be used"`
 }
 
-func ConnectOrFail(endpoint string, token string) *jsonrpc.Tunnel {
-	tunnel, err := Connect(endpoint, token)
+func ConnectRetryOrFail(endpoint string, token string) *jsonrpc.Tunnel {
+	var result *jsonrpc.Tunnel
+	err := backoff.Retry(func() error {
+		tun, err2 := Connect(endpoint, token)
+		if err2 != nil {
+			return err2
+		} else {
+			result = tun
+			return nil
+		}
+
+	}, backoff.NewExponentialBackOff())
 	if err != nil {
-		log.Printf("Couldn't connect to endpoint '%s', due to error '%s'", endpoint, err)
+		log.Panic("Couldn't connect to endpoint '%s', due to error '%s'", endpoint, err)
 	}
-	return tunnel
+
+	return result
 }
+
 func Connect(endpoint string, token string) (*jsonrpc.Tunnel, error) {
 	conn, err := jsonrpcws.Dial(endpoint, token)
 	if err != nil {
@@ -45,22 +60,23 @@ func Connect(endpoint string, token string) (*jsonrpc.Tunnel, error) {
 	return jsonrpc.NewManagedTunnel(conn), nil
 }
 
-func PrintRate(){
+func PrintRate() {
 	for !Suspending {
 		fmt.Printf("Major rate %d/s  Minor rate %d/s\n", MajorCounter.Rate(), MinorCounter.Rate())
 		time.Sleep(5 * time.Second)
 	}
+	WG.Done()
 }
 
 func SendMessagesInLoop(wsUrl, token, senderId string, ratecounter *ratecounter.RateCounter) {
 
-	tunnel := ConnectOrFail(wsUrl, token)
+	tunnel := ConnectRetryOrFail(wsUrl, token)
 	defer tunnel.Close()
 
 	tunnel.Conn()
 
 	for !Suspending {
-		message := fmt.Sprintf("Message %s sent  from %s",RandStringRunes(rand.Intn(100)), senderId)
+		message := fmt.Sprintf("Message %s sent  from %s", RandStringRunes(rand.Intn(100)), senderId)
 		event := &model.PluginBrokerLogEvent{
 			RuntimeID: model.RuntimeID{Workspace: "ws1", Environment: "e1", OwnerId: "own1"},
 			Text:      message,
@@ -74,9 +90,12 @@ func SendMessagesInLoop(wsUrl, token, senderId string, ratecounter *ratecounter.
 		ratecounter.Incr(1)
 	}
 	fmt.Printf("Sending complete %s\n", senderId)
+	WG.Done()
 }
 
-func Init() {
+func Init(configuration *Configuration) {
+
+	WG.Add(configuration.MinorThreads + configuration.MajorThreads + 1)
 	log.SetOutput(os.Stdout)
 	rand.Seed(time.Now().UnixNano())
 }
@@ -92,19 +111,20 @@ func RandStringRunes(n int) string {
 }
 
 func main() {
-	Init()
+
 	var configuration Configuration
+	envconfig.Usage("JsonRpcLoader", &configuration)
 	err := envconfig.Process("JsonRpcLoader", &configuration)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
 
-	format := "CheHost: %s\nToken: %s\nMajorThreads: %d\nMinorThreads: %d\nTimeout: %s\nSecure: %v\n"
+	format := "Configuration is set to:\nCheHost: %s\nToken: %s\nMajorThreads: %d\nMinorThreads: %d\nTimeout: %s\nSecure: %v\n"
 	_, err = fmt.Printf(format, configuration.CheHost, configuration.CheToken, configuration.MajorThreads, configuration.MinorThreads, configuration.WsTimeout, configuration.Secure)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
-
+	Init(&configuration)
 	websocket.DefaultDialer.HandshakeTimeout = configuration.WsTimeout
 
 	var major, minor strings.Builder
@@ -121,11 +141,11 @@ func main() {
 	minor.WriteString("/api/websocket-minor")
 
 	for i := 0; i < configuration.MajorThreads; i++ {
-		go SendMessagesInLoop(major.String(), configuration.CheToken, "major"+ strconv.Itoa(i), MajorCounter)
+		go SendMessagesInLoop(major.String(), configuration.CheToken, "major"+strconv.Itoa(i), MajorCounter)
 	}
 
 	for i := 0; i < configuration.MinorThreads; i++ {
-		go SendMessagesInLoop(minor.String(), configuration.CheToken, "minor"+ strconv.Itoa(i), MinorCounter)
+		go SendMessagesInLoop(minor.String(), configuration.CheToken, "minor"+strconv.Itoa(i), MinorCounter)
 	}
 	go PrintRate()
 	// After setting everything up!
@@ -138,7 +158,7 @@ func main() {
 		<-signalChan
 		fmt.Println("\nReceived an interrupt, stopping services...")
 		Suspending = true
-		time.Sleep(5 * time.Second)
+		WG.Wait()
 		close(cleanupDone)
 	}()
 	<-cleanupDone

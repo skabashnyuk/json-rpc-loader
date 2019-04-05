@@ -14,33 +14,29 @@ docker pull ksmster/json-rpc-loader
 
 ## Running the tests
 ```
-docker run ksmster/json-rpc-loader \
-       -cheurl  ws://che-eclipse-che.192.168.64.12.nip.io/api/websocket \
-       -token=t1  \
-       -mnum=10 \
-       -tnum=1
+docker run -e JSONRPCLOADER_CHE_HOST=che-eclipse-che.192.168.64.67.nip ksmster/json-rpc-loader 
 ```
 Output
 ```
-[12:19:42]sj:json-rpc-loader[master]#: docker run ksmster/json-rpc-loader \
->        -cheurl  ws://che-eclipse-che.192.168.64.12.nip.io/api/websocket \
->        -token=t1  \
->        -mnum=10 \
->        -tnum=1
-thum: 1
-mnum: 10
-cheurl: ws://che-eclipse-che.192.168.64.12.nip.io/api/websocket
-cheToken: t1
-2018/12/16 10:19:44 Messaget from thread 0 number 0
-2018/12/16 10:19:44 Messaget from thread 0 number 1
-2018/12/16 10:19:44 Messaget from thread 0 number 2
-2018/12/16 10:19:44 Messaget from thread 0 number 3
-2018/12/16 10:19:44 Messaget from thread 0 number 4
-2018/12/16 10:19:44 Messaget from thread 0 number 5
-2018/12/16 10:19:44 Messaget from thread 0 number 6
-2018/12/16 10:19:44 Messaget from thread 0 number 7
-2018/12/16 10:19:44 Messaget from thread 0 number 8
-2018/12/16 10:19:44 Messaget from thread 0 number 9
+This application is configured via the environment. The following environment
+variables can be used:
+
+KEY                            TYPE             DEFAULT    REQUIRED    DESCRIPTION
+JSONRPCLOADER_CHE_HOST         String                      true        Che Server host
+JSONRPCLOADER_CHE_TOKEN        String                                  User token for multi-user che
+JSONRPCLOADER_MAJOR_THREADS    Integer          10                     Number of clients used to send message to major websocket endpoint
+JSONRPCLOADER_MINOR_THREADS    Integer          10                     Number of clients used to send message to minor websocket endpoint
+JSONRPCLOADER_WS_TIMEOUT       Duration         10s                    Websocket connection timeout
+JSONRPCLOADER_SECURE           True or False    false                  Whatever secure websocket aka wss connection should be used
+Configuration is set to:
+CheHost: che-eclipse-che.192.168.64.67.nip.io
+Token:
+MajorThreads: 10
+MinorThreads: 10
+Timeout: 10s
+Secure: false
+Major rate 0/s  Minor rate 0/s
+Major rate 23515/s  Minor rate 22678/s
 ```
 
 

@@ -10,7 +10,7 @@
 #   Red Hat, Inc. - initial API and implementation
 #
 
-FROM golang:1.11.3-alpine3.8 as builder
+FROM golang:1.12.1-alpine3.9 as builder
 RUN apk add --no-cache ca-certificates
 RUN adduser -D -g '' appuser
 WORKDIR /go/src/github.com/skabashnyuk/json-rpc-loader
@@ -22,5 +22,5 @@ FROM alpine:3.8
 USER appuser
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-COPY --from=builder /go/src/github.com/skabashnyuk/json-rpc-loader /
-ENTRYPOINT ["/json-rpc-loader"]
+COPY --from=builder /go/src/github.com/skabashnyuk/json-rpc-loader /usr/local/bin
+ENTRYPOINT ["json-rpc-loader"]

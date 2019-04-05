@@ -2,6 +2,14 @@
 
 
 [[projects]]
+  digest = "1:166438587ed45ac211dab8a3ecebf4fa0c186d0db63430fb9127bbc2e5fcdc67"
+  name = "github.com/cenkalti/backoff"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "1e4cf3da559842a91afcb6ea6141451e6c30c618"
+  version = "v2.1.1"
+
+[[projects]]
   digest = "1:e5c095ba351261598a2f621de0642b9cea19103cb1b979283f1943b3f4222942"
   name = "github.com/eclipse/che-go-jsonrpc"
   packages = [
@@ -48,6 +56,7 @@
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/cenkalti/backoff",
     "github.com/eclipse/che-go-jsonrpc",
     "github.com/eclipse/che-go-jsonrpc/jsonrpcws",
     "github.com/eclipse/che-plugin-broker/model",
