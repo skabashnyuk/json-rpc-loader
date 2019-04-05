@@ -76,7 +76,7 @@ func SendMessagesInLoop(wsUrl, token, senderId string, ratecounter *ratecounter.
 	tunnel.Conn()
 
 	for !Suspending {
-		message := fmt.Sprintf("Message %s sent  from %s", RandStringRunes(rand.Intn(100)), senderId)
+		message := fmt.Sprintf("Message %s sent  from %s", RandStringRunes(rand.Intn(200)), senderId)
 		event := &model.PluginBrokerLogEvent{
 			RuntimeID: model.RuntimeID{Workspace: "ws1", Environment: "e1", OwnerId: "own1"},
 			Text:      message,
