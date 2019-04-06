@@ -10,23 +10,16 @@
   version = "v2.1.1"
 
 [[projects]]
-  digest = "1:e5c095ba351261598a2f621de0642b9cea19103cb1b979283f1943b3f4222942"
+  digest = "1:302bd3d3d720780d2ab1596b48891e01c7be7e93b2e247634fc3bd00b6540537"
   name = "github.com/eclipse/che-go-jsonrpc"
   packages = [
     ".",
+    "event",
     "jsonrpcws",
   ]
   pruneopts = "UT"
   revision = "87cdb8da2597bc22a91f8dcff72999ac8fe5cd8c"
   version = "0.2.0"
-
-[[projects]]
-  digest = "1:90b1a0b934aa436980e0e82305b3a37b7908328cdafc91ac734d3fd66897e7b0"
-  name = "github.com/eclipse/che-plugin-broker"
-  packages = ["model"]
-  pruneopts = "UT"
-  revision = "e65ac22ba802e2366ce109d369fc072bbcb6d735"
-  version = "v0.4.0"
 
 [[projects]]
   digest = "1:7b5c6e2eeaa9ae5907c391a91c132abfd5c9e8a784a341b5625e750c67e6825d"
@@ -58,8 +51,8 @@
   input-imports = [
     "github.com/cenkalti/backoff",
     "github.com/eclipse/che-go-jsonrpc",
+    "github.com/eclipse/che-go-jsonrpc/event",
     "github.com/eclipse/che-go-jsonrpc/jsonrpcws",
-    "github.com/eclipse/che-plugin-broker/model",
     "github.com/gorilla/websocket",
     "github.com/kelseyhightower/envconfig",
     "github.com/paulbellamy/ratecounter",
