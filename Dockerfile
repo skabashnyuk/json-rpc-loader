@@ -15,10 +15,10 @@ RUN apk add --no-cache ca-certificates
 RUN adduser -D -g '' appuser
 WORKDIR /go/src/github.com/skabashnyuk/json-rpc-loader
 COPY . /go/src/github.com/skabashnyuk/json-rpc-loader
-RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -installsuffix cgo -o json-rpc-loader main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -a -ldflags '-w -s' -installsuffix cgo -o json-rpc-loader github.com/skabashnyuk/json-rpc-loader
 
 
-FROM alpine:3.8
+FROM alpine:3.9
 USER appuser
 COPY --from=builder /etc/passwd /etc/passwd
 COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/

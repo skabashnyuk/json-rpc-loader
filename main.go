@@ -29,7 +29,7 @@ type Configuration struct {
 
 func PrintRate() {
 	for !Suspending {
-		fmt.Printf("Iteration at %d/5s \n", RateCounter.Rate())
+		fmt.Printf("Iteration at %d/s \n", RateCounter.Rate())
 		time.Sleep(5 * time.Second)
 	}
 	WG.Done()
