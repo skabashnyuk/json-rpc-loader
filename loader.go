@@ -34,7 +34,7 @@ func (loader *Loader) Init(wsUrlMajor, wsUrlMinor, token string) {
 	loader.PushLogs()
 }
 
-func (loader *Loader) Start() error {
+func (loader *Loader) Start()  {
 
 	//start installation
 	loader.pubStarting()
@@ -164,7 +164,6 @@ func (loader *Loader) Start() error {
 	loader.pubInstallationCompleted("org.eclipse.che.ls.java", InstallerStatusRunning)
 	loader.pubBootstrappingDone()
 
-	return nil
 }
 
 func (loader *Loader) initConnections() {

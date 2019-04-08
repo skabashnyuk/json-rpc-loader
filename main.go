@@ -20,11 +20,12 @@ var RateCounter = ratecounter.NewRateCounter(1 * time.Second)
 var WG = &sync.WaitGroup{}
 
 type Configuration struct {
-	CheHost   string        `required:"true" split_words:"true" desc:"Che Server host"`
-	CheToken  string        `split_words:"true" desc:"User token for multi-user che"`
-	Threads   int           `default:"10" split_words:"true" desc:"Number of clients used to send messages"`
-	WsTimeout time.Duration `default:"10s" split_words:"true" desc:"Websocket connection timeout "`
-	Secure    bool          `default:"false" split_words:"true" desc:"Whatever secure websocket aka wss connection should be used"`
+	CheHost      string        `required:"true" split_words:"true" desc:"Che Server host"`
+	CheToken     string        `split_words:"true" desc:"User token for multi-user che"`
+	Client       int           `default:"10" split_words:"true" desc:"Number of clients used to send messages"`
+	WsTimeout    time.Duration `default:"10s" split_words:"true" desc:"Websocket connection timeout "`
+	Secure       bool          `default:"false" split_words:"true" desc:"Whatever secure websocket aka wss connection should be used"`
+	Multiplexing bool          `default:"false" split_words:"true" desc:"Whatever use single websocket connection by each client to send request"`
 }
 
 func PrintRate() {
@@ -35,21 +36,33 @@ func PrintRate() {
 	WG.Done()
 }
 
-func SendMessagesInLoop(wsUrlMajor, wsUrlMinor, token, senderId string) {
-	loader := &Loader{}
-	defer loader.Close()
-	loader.Init(wsUrlMajor, wsUrlMinor, token)
-	for !Suspending {
-		loader.Start()
-		RateCounter.Incr(1)
+func SendMessagesInLoop(wsUrlMajor, wsUrlMinor, token, senderId string, multiplexing bool) {
+
+	if multiplexing {
+		loader := &Loader{}
+		defer loader.Close()
+		loader.Init(wsUrlMajor, wsUrlMinor, token)
+		for !Suspending {
+			loader.Start()
+			RateCounter.Incr(1)
+		}
+	} else {
+		for !Suspending {
+			loader := &Loader{}
+			loader.Init(wsUrlMajor, wsUrlMinor, token)
+			loader.Start()
+			loader.Close()
+			RateCounter.Incr(1)
+		}
 	}
+
 	fmt.Printf("Sending complete %s\n", senderId)
 	WG.Done()
 }
 
 func Init(configuration *Configuration) {
 
-	WG.Add(configuration.Threads + 1)
+	WG.Add(configuration.Client + 1)
 	log.SetOutput(os.Stdout)
 	rand.Seed(time.Now().UnixNano())
 }
@@ -73,8 +86,8 @@ func main() {
 		log.Fatal(err.Error())
 	}
 
-	format := "Configuration is set to:\nCheHost: %s\nToken: %s\nThreads: %d\nTimeout: %s\nSecure: %v\n"
-	_, err = fmt.Printf(format, configuration.CheHost, configuration.CheToken, configuration.Threads, configuration.WsTimeout, configuration.Secure)
+	format := "Configuration is set to:\nCheHost: %s\nToken: %s\nThreads: %d\nTimeout: %s\nSecure: %v\nMultiplexing: %v\n"
+	_, err = fmt.Printf(format, configuration.CheHost, configuration.CheToken, configuration.Client, configuration.WsTimeout, configuration.Secure, configuration.Multiplexing)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -94,8 +107,8 @@ func main() {
 	minor.WriteString(configuration.CheHost)
 	minor.WriteString("/api/websocket-minor")
 
-	for i := 0; i < configuration.Threads; i++ {
-		go SendMessagesInLoop(major.String(), minor.String(), configuration.CheToken, "Loader "+strconv.Itoa(i))
+	for i := 0; i < configuration.Client; i++ {
+		go SendMessagesInLoop(major.String(), minor.String(), configuration.CheToken, "Loader "+strconv.Itoa(i), configuration.Multiplexing)
 	}
 
 	go PrintRate()

@@ -21,18 +21,20 @@ Output
 This application is configured via the environment. The following environment
 variables can be used:
 
-KEY                         TYPE             DEFAULT    REQUIRED    DESCRIPTION
-JSONRPCLOADER_CHE_HOST      String                      true        Che Server host
-JSONRPCLOADER_CHE_TOKEN     String                                  User token for multi-user che
-JSONRPCLOADER_THREADS       Integer          10                     Number of clients used to send messages
-JSONRPCLOADER_WS_TIMEOUT    Duration         10s                    Websocket connection timeout 
-JSONRPCLOADER_SECURE        True or False    false                  Whatever secure websocket aka wss connection should be used
+KEY                           TYPE             DEFAULT    REQUIRED    DESCRIPTION
+JSONRPCLOADER_CHE_HOST        String                      true        Che Server host
+JSONRPCLOADER_CHE_TOKEN       String                                  User token for multi-user che
+JSONRPCLOADER_CLIENT          Integer          10                     Number of clients used to send messages
+JSONRPCLOADER_WS_TIMEOUT      Duration         10s                    Websocket connection timeout 
+JSONRPCLOADER_SECURE          True or False    false                  Whatever secure websocket aka wss connection should be used
+JSONRPCLOADER_MULTIPLEXING    True or False    false                  Whatever use single websocket connection by each client to send request
 Configuration is set to:
 CheHost: che-eclipse-che.192.168.64.67.nip.io
 Token: 
 Threads: 10
 Timeout: 10s
 Secure: false
+Multiplexing: false
 Iteration at 0/5s 
 Iteration at 384/5s 
 Iteration at 202/5s 
