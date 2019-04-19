@@ -10,21 +10,22 @@ import (
 )
 
 type Loader struct {
-	tunnelStatuses                *jsonrpc.Tunnel
-	tunnelLogs                    *jsonrpc.Tunnel
-	wsUrlMajor, wsUrlMinor, token string
-	bus                           *event.Bus
-	runtimeID                     RuntimeID
+	tunnelStatuses         *jsonrpc.Tunnel
+	tunnelLogs             *jsonrpc.Tunnel
+	wsUrlMajor, wsUrlMinor string
+	tokenProvider          GetToken
+	bus                    *event.Bus
+	runtimeID              RuntimeID
 }
 
-func (loader *Loader) Init(wsUrlMajor, wsUrlMinor, token string) {
+func (loader *Loader) Init(wsUrlMajor, wsUrlMinor, wsId string, tokenProvider GetToken) {
 
 	loader.wsUrlMajor = wsUrlMajor
 	loader.wsUrlMinor = wsUrlMinor
-	loader.token = token
+	loader.tokenProvider = tokenProvider
 	loader.bus = event.NewBus()
 	loader.runtimeID = RuntimeID{
-		Workspace:   RandStringRunes(10),
+		Workspace:   wsId,
 		Environment: RandStringRunes(10),
 		OwnerId:     RandStringRunes(10)}
 	//connect to server
@@ -34,7 +35,7 @@ func (loader *Loader) Init(wsUrlMajor, wsUrlMinor, token string) {
 	loader.PushLogs()
 }
 
-func (loader *Loader) Start()  {
+func (loader *Loader) Start() {
 
 	//start installation
 	loader.pubStarting()
@@ -167,8 +168,8 @@ func (loader *Loader) Start()  {
 }
 
 func (loader *Loader) initConnections() {
-	loader.tunnelStatuses = connectRetryOrFail(loader.wsUrlMajor, loader.token)
-	loader.tunnelLogs = connectRetryOrFail(loader.wsUrlMinor, loader.token)
+	loader.tunnelStatuses = connectRetryOrFail(loader.wsUrlMajor, loader.tokenProvider())
+	loader.tunnelLogs = connectRetryOrFail(loader.wsUrlMinor, loader.tokenProvider())
 }
 
 func (loader *Loader) Close() {

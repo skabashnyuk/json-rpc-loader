@@ -2,12 +2,31 @@
 
 
 [[projects]]
+  branch = "master"
+  digest = "1:3349759c640ed603ad48fc10d7b8a964227e6adfe09a4c2d290ae77c0833fe2f"
+  name = "github.com/Nerzal/gocloak"
+  packages = [
+    ".",
+    "pkg/jwx",
+  ]
+  pruneopts = "UT"
+  revision = "b233b80253f0d5de97f54f9317550974f2f689fb"
+
+[[projects]]
   digest = "1:166438587ed45ac211dab8a3ecebf4fa0c186d0db63430fb9127bbc2e5fcdc67"
   name = "github.com/cenkalti/backoff"
   packages = ["."]
   pruneopts = "UT"
   revision = "1e4cf3da559842a91afcb6ea6141451e6c30c618"
   version = "v2.1.1"
+
+[[projects]]
+  digest = "1:76dc72490af7174349349838f2fe118996381b31ea83243812a97e5a0fd5ed55"
+  name = "github.com/dgrijalva/jwt-go"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
 
 [[projects]]
   digest = "1:302bd3d3d720780d2ab1596b48891e01c7be7e93b2e247634fc3bd00b6540537"
@@ -45,10 +64,53 @@
   revision = "524851a93235ac051e3540563ed7909357fe24ab"
   version = "v0.2.0"
 
+[[projects]]
+  branch = "master"
+  digest = "1:e12fad094ec6d45e481330f751a6f46984d111c6c4484b0eb449b5aa24a4ca88"
+  name = "golang.org/x/net"
+  packages = [
+    "idna",
+    "publicsuffix",
+  ]
+  pruneopts = "UT"
+  revision = "1da14a5a36f220ea3f03470682b737b1dfd5de22"
+
+[[projects]]
+  digest = "1:a2ab62866c75542dd18d2b069fec854577a20211d7c0ea6ae746072a1dccdd18"
+  name = "golang.org/x/text"
+  packages = [
+    "collate",
+    "collate/build",
+    "internal/colltab",
+    "internal/gen",
+    "internal/tag",
+    "internal/triegen",
+    "internal/ucd",
+    "language",
+    "secure/bidirule",
+    "transform",
+    "unicode/bidi",
+    "unicode/cldr",
+    "unicode/norm",
+    "unicode/rangetable",
+  ]
+  pruneopts = "UT"
+  revision = "f21a4dfb5e38f5895301dc265a8def02365cc3d0"
+  version = "v0.3.0"
+
+[[projects]]
+  digest = "1:41206f4d0410803e64cfb203f665330c3183988408cb532b56305a816a87bd99"
+  name = "gopkg.in/resty.v1"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "fa5875c0caa5c260ab78acec5a244215a730247f"
+  version = "v1.12.0"
+
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/Nerzal/gocloak",
     "github.com/cenkalti/backoff",
     "github.com/eclipse/che-go-jsonrpc",
     "github.com/eclipse/che-go-jsonrpc/event",

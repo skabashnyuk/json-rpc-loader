@@ -22,12 +22,17 @@ This application is configured via the environment. The following environment
 variables can be used:
 
 KEY                           TYPE             DEFAULT    REQUIRED    DESCRIPTION
-JSONRPCLOADER_CHE_HOST        String                      true        Che Server host
-JSONRPCLOADER_CHE_TOKEN       String                                  User token for multi-user che
-JSONRPCLOADER_CLIENT          Integer          10                     Number of clients used to send messages
-JSONRPCLOADER_WS_TIMEOUT      Duration         10s                    Websocket connection timeout 
-JSONRPCLOADER_SECURE          True or False    false                  Whatever secure websocket aka wss connection should be used
-JSONRPCLOADER_MULTIPLEXING    True or False    false                  Whatever use single websocket connection by each client to send request
+JSONRPCLOADER_CHE_HOST        String                                        true        Che Server host
+JSONRPCLOADER_CLIENT          Integer          10                                       Number of clients used to send messages
+JSONRPCLOADER_WS_TIMEOUT      Duration         10s                                      Websocket connection timeout
+JSONRPCLOADER_SECURE          True or False    false                                    Whether or not to use secure websocket aka wss connection
+JSONRPCLOADER_MULTIPLEXING    True or False    false                                    Whether or not to use single websocket connection by each client to send request
+JSONRPCLOADER_MULTIUSER       True or False    false                                    Use che in multi-user mode
+JSONRPCLOADER_USERNAME        String           admin                                    Che user name
+JSONRPCLOADER_USERPASSWORD    String           admin                                    Che user password
+JSONRPCLOADER_СHEREALM        String           che                                      Multi user  Che realm
+JSONRPCLOADER_СHECLIENTID     String           che-public                               Keycloak client id of Che
+JSONRPCLOADER_WORKSPACEID     String           workspace4qhfddv2a8i4ae42                Workspace ide used to generate load
 Configuration is set to:
 CheHost: che-eclipse-che.192.168.64.67.nip.io
 Token: 

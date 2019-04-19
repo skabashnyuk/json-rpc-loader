@@ -1,12 +1,16 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	. "github.com/Nerzal/gocloak"
 	"github.com/gorilla/websocket"
 	"github.com/kelseyhightower/envconfig"
 	"github.com/paulbellamy/ratecounter"
+	"io/ioutil"
 	"log"
 	"math/rand"
+	"net/http"
 	"os"
 	"os/signal"
 	"strconv"
@@ -21,11 +25,74 @@ var WG = &sync.WaitGroup{}
 
 type Configuration struct {
 	CheHost      string        `required:"true" split_words:"true" desc:"Che Server host"`
-	CheToken     string        `split_words:"true" desc:"User token for multi-user che"`
 	Client       int           `default:"10" split_words:"true" desc:"Number of clients used to send messages"`
-	WsTimeout    time.Duration `default:"10s" split_words:"true" desc:"Websocket connection timeout "`
-	Secure       bool          `default:"false" split_words:"true" desc:"Whatever secure websocket aka wss connection should be used"`
-	Multiplexing bool          `default:"false" split_words:"true" desc:"Whatever use single websocket connection by each client to send request"`
+	WsTimeout    time.Duration `default:"10s" split_words:"true" desc:"Websocket connection timeout"`
+	Secure       bool          `default:"false" split_words:"true" desc:"Whether or not to use secure websocket aka wss connection"`
+	Multiplexing bool          `default:"false" split_words:"true" desc:"Whether or not to use single websocket connection by each client to send request"`
+	MultiUser    bool          `default:"false" split_words:"false" desc:"Use che in multi-user mode"`
+	UserName     string        `default:"admin" split_words:"false" desc:"Che user name"`
+	UserPassword string        `default:"admin" split_words:"false" desc:"Che user password"`
+	СheRealm     string        `default:"che" split_words:"false" desc:"Multi user  Che realm"`
+	СheClientId  string        `default:"che-public" split_words:"false" desc:"Keycloak client id of Che"`
+	WorkspaceId  string        `default:"workspace4qhfddv2a8i4ae42" split_words:"false" desc:"Workspace ide used to generate load"`
+}
+
+type GetToken func() string
+
+type KeycloakTokenProvider struct {
+	CheHost      string
+	UserName     string
+	UserPassword string
+	Realm        string
+	ClientId     string
+	token        *JWT
+	goCloak      GoCloak
+}
+
+func dummyToken() string {
+	return ""
+}
+
+func newKeycloakTokenProvider(cheHost, userName, userPassword, realm, clientId string) *KeycloakTokenProvider {
+
+	resp, err := http.Get("http://" + cheHost + "/api/keycloak/settings")
+	if err != nil {
+		panic(err)
+	}
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+
+	var result map[string]interface{}
+
+	// Unmarshal or Decode the JSON to the interface.
+	json.Unmarshal(body, &result)
+	authServerUrl := result["che.keycloak.auth_server_url"].(string)
+	gcloak := NewClient(authServerUrl[:len(authServerUrl)-5])
+
+	jwtToken, err := gcloak.Login(clientId, "null", realm, userName, userPassword)
+	if err != nil {
+		panic("Something wrong with the credentials or url")
+	}
+	return &KeycloakTokenProvider{
+		CheHost:      cheHost,
+		UserName:     userName,
+		UserPassword: userPassword,
+		Realm:        realm,
+		ClientId:     clientId,
+		goCloak:      gcloak,
+		token:        jwtToken,
+	}
+}
+
+func (provider *KeycloakTokenProvider) getToken() string {
+	if time.Unix(int64(provider.token.ExpiresIn+60000), 0).After(time.Now()) {
+		newToken, err := provider.goCloak.RefreshToken(provider.token.RefreshToken, provider.ClientId, "null", provider.Realm)
+		if err != nil {
+			panic("Something wrong with the credentials or url")
+		}
+		provider.token = newToken
+	}
+	return provider.token.AccessToken
 }
 
 func PrintRate() {
@@ -36,12 +103,12 @@ func PrintRate() {
 	WG.Done()
 }
 
-func SendMessagesInLoop(wsUrlMajor, wsUrlMinor, token, senderId string, multiplexing bool) {
+func SendMessagesInLoop(wsUrlMajor, wsUrlMinor, senderId, workspaceId string, multiplexing bool, tokenProvider GetToken) {
 
 	if multiplexing {
 		loader := &Loader{}
 		defer loader.Close()
-		loader.Init(wsUrlMajor, wsUrlMinor, token)
+		loader.Init(wsUrlMajor, wsUrlMinor, workspaceId, tokenProvider)
 		for !Suspending {
 			loader.Start()
 			RateCounter.Incr(1)
@@ -49,7 +116,7 @@ func SendMessagesInLoop(wsUrlMajor, wsUrlMinor, token, senderId string, multiple
 	} else {
 		for !Suspending {
 			loader := &Loader{}
-			loader.Init(wsUrlMajor, wsUrlMinor, token)
+			loader.Init(wsUrlMajor, wsUrlMinor, workspaceId, tokenProvider)
 			loader.Start()
 			loader.Close()
 			RateCounter.Incr(1)
@@ -87,7 +154,7 @@ func main() {
 	}
 
 	format := "Configuration is set to:\nCheHost: %s\nToken: %s\nThreads: %d\nTimeout: %s\nSecure: %v\nMultiplexing: %v\n"
-	_, err = fmt.Printf(format, configuration.CheHost, configuration.CheToken, configuration.Client, configuration.WsTimeout, configuration.Secure, configuration.Multiplexing)
+	_, err = fmt.Printf(format, configuration.CheHost, "", configuration.Client, configuration.WsTimeout, configuration.Secure, configuration.Multiplexing)
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -107,8 +174,15 @@ func main() {
 	minor.WriteString(configuration.CheHost)
 	minor.WriteString("/api/websocket-minor")
 
+	tokeProvider := dummyToken
+
+	if configuration.MultiUser {
+		tp := newKeycloakTokenProvider(configuration.CheHost, configuration.UserName, configuration.UserPassword, configuration.СheRealm, configuration.СheClientId)
+		tokeProvider = tp.getToken
+	}
+
 	for i := 0; i < configuration.Client; i++ {
-		go SendMessagesInLoop(major.String(), minor.String(), configuration.CheToken, "Loader "+strconv.Itoa(i), configuration.Multiplexing)
+		go SendMessagesInLoop(major.String(), minor.String(), "Loader "+strconv.Itoa(i), configuration.WorkspaceId, configuration.Multiplexing, tokeProvider)
 	}
 
 	go PrintRate()
