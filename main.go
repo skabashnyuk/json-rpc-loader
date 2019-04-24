@@ -87,7 +87,7 @@ func newKeycloakTokenProvider(cheHost, userName, userPassword, realm, clientId s
 }
 
 func (provider *KeycloakTokenProvider) getToken() string {
-q
+
 	if provider.lastRefreshTime.Add(time.Duration(provider.token.ExpiresIn-5) * time.Second).Before(time.Now()) {
 		newToken, err := provider.goCloak.RefreshToken(provider.token.RefreshToken, provider.ClientId, "null", provider.Realm)
 		if err != nil {
