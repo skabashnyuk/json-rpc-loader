@@ -34,19 +34,20 @@ type Configuration struct {
 	UserPassword string        `default:"admin" split_words:"false" desc:"Che user password"`
 	СheRealm     string        `default:"che" split_words:"false" desc:"Multi user  Che realm"`
 	СheClientId  string        `default:"che-public" split_words:"false" desc:"Keycloak client id of Che"`
-	WorkspaceId  string        `default:"workspace4qhfddv2a8i4ae42" split_words:"false" desc:"Workspace ide used to generate load"`
+	WorkspaceId  string        `required:"true" split_words:"false" desc:"Workspace ide used to generate load"`
 }
 
 type GetToken func() string
 
 type KeycloakTokenProvider struct {
-	CheHost      string
-	UserName     string
-	UserPassword string
-	Realm        string
-	ClientId     string
-	token        *JWT
-	goCloak      GoCloak
+	CheHost         string
+	UserName        string
+	UserPassword    string
+	Realm           string
+	ClientId        string
+	token           *JWT
+	goCloak         GoCloak
+	lastRefreshTime time.Time
 }
 
 func dummyToken() string {
@@ -74,22 +75,27 @@ func newKeycloakTokenProvider(cheHost, userName, userPassword, realm, clientId s
 		panic("Something wrong with the credentials or url")
 	}
 	return &KeycloakTokenProvider{
-		CheHost:      cheHost,
-		UserName:     userName,
-		UserPassword: userPassword,
-		Realm:        realm,
-		ClientId:     clientId,
-		goCloak:      gcloak,
-		token:        jwtToken,
+		CheHost:         cheHost,
+		UserName:        userName,
+		UserPassword:    userPassword,
+		Realm:           realm,
+		ClientId:        clientId,
+		goCloak:         gcloak,
+		token:           jwtToken,
+		lastRefreshTime: time.Now(),
 	}
 }
 
 func (provider *KeycloakTokenProvider) getToken() string {
-	if time.Unix(int64(provider.token.ExpiresIn+60000), 0).After(time.Now()) {
+q
+	if provider.lastRefreshTime.Add(time.Duration(provider.token.ExpiresIn-5) * time.Second).Before(time.Now()) {
 		newToken, err := provider.goCloak.RefreshToken(provider.token.RefreshToken, provider.ClientId, "null", provider.Realm)
 		if err != nil {
 			panic("Something wrong with the credentials or url")
 		}
+
+		provider.lastRefreshTime = time.Now()
+		fmt.Printf("Token refreshed \n")
 		provider.token = newToken
 	}
 	return provider.token.AccessToken
