@@ -9,6 +9,6 @@ require (
 	github.com/gorilla/websocket v1.4.0
 	github.com/kelseyhightower/envconfig v1.3.0
 	github.com/paulbellamy/ratecounter v0.2.0
-	golang.org/x/net v0.0.0-20190415214537-1da14a5a36f2 // indirect
+	golang.org/x/net v0.7.0 // indirect
 	gopkg.in/resty.v1 v1.12.0 // indirect
 )
